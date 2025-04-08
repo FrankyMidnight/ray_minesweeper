@@ -1,5 +1,6 @@
 #include <raylib.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,7 @@ void draw();
 void read_input();
 bool load_image_textures();
 void change_theme();
+void change_size();
 
 int WIN_WIDTH = 600;
 int WIN_HEIGHT = 600;
@@ -114,6 +116,8 @@ bool init()
     }
     SetTargetFPS(FPS);
     load_image_textures();
+    // setup size
+    
     return true;
 }
 void cleanup()
@@ -138,31 +142,30 @@ bool setup_game()
         TraceLog(LOG_ERROR, "Error allocating game ...");
         return false;
     }
-    // setup size
-    game->board_size = SIZE_SMALL;
-
+    
+    // game->board_size = SIZE_SMALL;
 
     // SET BOARD SIZE ACCORDING TO GAME SIZE
     switch(game->board_size)
     {
         case SIZE_SMALL:
-            game->cols = 9;
-            game->rows = 9;
-            game->mines = 16;
+            game->cols =  5;
+            game->rows =  5;
+            game->mines = 10;
             break;
         case SIZE_MEDIUM:
-            game->cols = 19;
-            game->rows = 19;
+            game->cols =  19;
+            game->rows =  19;
             game->mines = 24;
             break;
         case SIZE_LARGE:
-            game->cols = 29;
-            game->rows = 29;
+            game->cols =  29;
+            game->rows =  29;
             game->mines = 36;
             break;
         case SIZE_EXTRA_LARGE:
-            game->cols = 39;
-            game->rows = 39;
+            game->cols =  39;
+            game->rows =  39;
             game->mines = 64;
             break;
         default:
@@ -228,11 +231,20 @@ bool setup_game()
     {
         size_t row = (size_t)rand() % game->rows;
         size_t col = (size_t)rand() % game->cols;
-        board[game->cols * row + col].is_mine = true;
+        if(!board[game->cols * row + col].is_mine) 
+        {
+
+            board[game->cols * row + col].is_mine = true;
+        }
+        else  
+        {
+            i--;
+        }
+        TraceLog(LOG_INFO,"Placed mine %lu of %lu at row : %lu\tcol : %lu",i,game->mines, row, col);
     }
     
     
-    // set numbers for nearby mines
+    // set numbers src_rectangle  for nearby mines
     // loop the board
     for (int row = 0; row < (int)game->rows; row++) 
     {
@@ -325,24 +337,21 @@ void draw()
             // Calculate the dest x y coordinate for the cell texture
             float dest_posX = dest_rect_width * (float)col;
             float dest_posY = dest_rect_height * (float)row;
-            // DRAW MINE
-            if(board[index].is_mine)
+            if (board[index].is_revealed) 
+            // DRAW REVEALED CELL
             {
-                // DrawRectangle(posX, posY, rect_width, rect_height , RED);
                 DrawTexturePro(board_texture, 
-                    (Rectangle){.x = 32.0f, .y = game->theme_y_offset + 16.0f , .width = 16.0f, .height = 16.0f},
+                    board[index].src_rect,
                     (Rectangle){ . x = dest_posX , .y = dest_posY , .width = dest_rect_width, .height = dest_rect_height}, 
                     (Vector2){.x = 0.0f , .y = 0.0f}, 
                     0.0f, 
                     WHITE);
             }
-            else if (board[index].is_revealed) 
-            // DRAW REVEALED CELL
+            else if(board[index].is_checked)
             {
-            
-                // DrawRectangle(posX, posY, rect_width, rect_height , DARKGRAY);
+            // DRAW FLAG
                 DrawTexturePro(board_texture, 
-                    board[index].src_rect,
+                    (Rectangle){.x = 32.0f, .y = game->theme_y_offset + 16.0f , .width = 16.0f, .height = 16.0f},
                     (Rectangle){ . x = dest_posX , .y = dest_posY , .width = dest_rect_width, .height = dest_rect_height}, 
                     (Vector2){.x = 0.0f , .y = 0.0f}, 
                     0.0f, 
@@ -364,15 +373,17 @@ void draw()
 }
 void read_input()
 {
+    Vector2 mouse_pos = GetMousePosition();
+    // column = x pos / (win_width / game_cols)
+    int col = (int)(mouse_pos.x /((float)WIN_WIDTH / (float)game->cols));
+    int row = (int)(mouse_pos.y /((float)WIN_HEIGHT / (float)game->rows));
+    // CHECK LEFT CLICK
     if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         // Reveal cell under mouse click
-        Vector2 mouse_pos = GetMousePosition();
-        // column = x pos / (win_width / game_cols)
-        int col = (int)(mouse_pos.x /((float)WIN_WIDTH / (float)game->cols));
-        int row = (int)(mouse_pos.y /((float)WIN_HEIGHT / (float)game->rows));
-        TraceLog(LOG_INFO, "Col : %i\tRow : %i", col, row);
-        TraceLog(LOG_INFO, "Mouse_X : %.2f\tMouse_Y : %.2f", mouse_pos.x, mouse_pos.y);
+        
+        // TraceLog(LOG_INFO, "Col : %i\tRow : %i", col, row);
+        // TraceLog(LOG_INFO, "Mouse_X : %.2f\tMouse_Y : %.2f", mouse_pos.x, mouse_pos.y);
         // if click is on a mine game over
         if(board[game->cols * (size_t)row + (size_t)col].is_mine)
         {
@@ -382,8 +393,30 @@ void read_input()
         // just reveal the cell
         {
         board[game->cols * (size_t)row + (size_t)col].is_revealed = true;
-        TraceLog(LOG_INFO, "Nearby mines : %i",board[game->cols * (size_t)row + (size_t)col].nearby_mines);
+        // TraceLog(LOG_INFO, "Nearby mines : %i",board[game->cols * (size_t)row + (size_t)col].nearby_mines);
         }
+        // if all non mine cells are revealed YOU WIN
+        size_t total_revealed = {};
+        size_t total_cells = game->cols * game->rows;
+        for(size_t i = 0 ; i < total_cells; i++)
+        {
+            if(board[i].is_revealed)
+            {
+                total_revealed++;
+            }
+        }
+        if(total_cells == (total_revealed + game->mines))
+        {
+            TraceLog(LOG_INFO, "YOU WIN !! total cells : %zu\ttotal_revealed : %zu\tgame mines : %zu",
+                total_cells , total_revealed , game->mines);
+
+        }
+    }
+    // CHECK RIGHT CLICK
+    if(IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
+    {
+        // Place Flag to signal possible mine
+        board[game->cols * (size_t)row + (size_t)col].is_checked = true;
     }
     switch(GetKeyPressed())
     {
@@ -421,12 +454,20 @@ void read_input()
             game->theme = 0;
             game->theme_y_offset = 192.0f;
             change_theme();
-            TraceLog(LOG_INFO, "THEME_6 offset : %.2f", game->theme_y_offset);
+            // TraceLog(LOG_INFO, "THEME_6 offset : %.2f", game->theme_y_offset);
             break;
         case KEY_EIGHT:
             game->theme = 0;
             game->theme_y_offset = 224.0f;
             change_theme();
+            break;
+        case KEY_N:
+            // new game
+            setup_game();
+            break;
+        case KEY_S:
+            // change SIZE
+            change_size();
             break;
         default:
             break;
@@ -497,3 +538,17 @@ void change_theme()
         board[i].src_rect.y = game->theme_y_offset;
     }
 }
+
+void change_size()
+{
+    if(game->board_size <= SIZE_EXTRA_LARGE)
+    {
+        game->board_size++;
+    }
+    else  
+    {
+        game->board_size = SIZE_SMALL;
+    }
+}
+
+
