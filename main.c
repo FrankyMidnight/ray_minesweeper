@@ -12,6 +12,7 @@ bool setup_game();
 void draw();
 void read_input();
 bool load_image_textures();
+void change_theme();
 
 int WIN_WIDTH = 600;
 int WIN_HEIGHT = 600;
@@ -31,6 +32,18 @@ typedef enum
     SIZE_EXTRA_LARGE
 }board_size_t;
 
+typedef enum 
+{
+    THEME_0 = 0,
+    THEME_1,
+    THEME_2,
+    THEME_3,
+    THEME_4,
+    THEME_5,
+    THEME_6,
+    THEME_7
+}theme_t;
+
 typedef struct 
 {
     Rectangle src_rect;
@@ -43,10 +56,12 @@ typedef struct
 
 typedef struct 
 {
+    theme_t theme;
     board_size_t board_size;
     size_t cols;
     size_t rows;
     size_t mines;
+    float theme_y_offset;
 }game_t;
 
 board_t *board;
@@ -78,10 +93,12 @@ int main(void)
     // MAIN LOOP
     while (!WindowShouldClose())
     {
+        BeginDrawing();
         // RENDER
         draw();
         // READ USER INPUT
         read_input();
+        EndDrawing();
     }
     cleanup();
     return EXIT_SUCCESS;
@@ -131,22 +148,53 @@ bool setup_game()
         case SIZE_SMALL:
             game->cols = 9;
             game->rows = 9;
-            game->mines = 6;
+            game->mines = 16;
             break;
         case SIZE_MEDIUM:
             game->cols = 19;
             game->rows = 19;
-            game->mines = 12;
+            game->mines = 24;
             break;
         case SIZE_LARGE:
             game->cols = 29;
             game->rows = 29;
-            game->mines = 18;
+            game->mines = 36;
             break;
         case SIZE_EXTRA_LARGE:
             game->cols = 39;
             game->rows = 39;
-            game->mines = 24;
+            game->mines = 64;
+            break;
+        default:
+            break;
+    }
+    // setup theme offsets
+    game->theme = THEME_0;
+    switch(game->theme)
+    {
+        case THEME_0:
+            game->theme_y_offset = 0.0f;
+            break;
+        case THEME_1:
+            game->theme_y_offset = 32.0f;
+            break;
+        case THEME_2:
+            game->theme_y_offset = 64.0f;
+            break;
+        case THEME_3:
+            game->theme_y_offset = 96.0f;
+            break;
+        case THEME_4:
+            game->theme_y_offset = 128.0f;
+            break;
+        case THEME_5:
+            game->theme_y_offset = 160.0f;
+            break;
+        case THEME_6:
+            game->theme_y_offset = 192.0f;
+            break;
+        case THEME_7:
+            game->theme_y_offset = 224.0f;
             break;
         default:
             break;
@@ -226,35 +274,35 @@ bool setup_game()
             switch (board[cell_index].nearby_mines) 
             {
             case 0:
-                board[cell_index].src_rect = (Rectangle){.x = 0.0f, .y = 0.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 0.0f, .y = 0.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             case 1:
-                board[cell_index].src_rect = (Rectangle){.x = 16.0f, .y = 0.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 16.0f, .y = 0.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             case 2:
-                board[cell_index].src_rect = (Rectangle){.x = 32.0f, .y = 0.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 32.0f, .y = 0.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             case 3:
-                board[cell_index].src_rect = (Rectangle){.x = 48.0f, .y = 0.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 48.0f, .y = 0.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             case 4:
-                board[cell_index].src_rect = (Rectangle){.x = 64.0f, .y = 0.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 64.0f, .y = 0.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             case 5:
-                board[cell_index].src_rect = (Rectangle){.x = 80.0f, .y = 0.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 80.0f, .y = 0.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             case 6:
-                board[cell_index].src_rect = (Rectangle){.x = 96.0f, .y = 0.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 96.0f, .y = 0.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             case 7:
-                board[cell_index].src_rect = (Rectangle){.x = 112.0f, .y = 0.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 112.0f, .y = 0.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             case 8:
-                board[cell_index].src_rect = (Rectangle){.x = 0.0f, .y = 16.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 0.0f, .y = 16.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             default:
             // on error set mine icon with an X
-                board[cell_index].src_rect = (Rectangle){.x = 112.0f, .y = 16.0f, .width = 16.0f, .height = 16.0f};
+                board[cell_index].src_rect = (Rectangle){.x = 112.0f, .y = 16.0f + game->theme_y_offset, .width = 16.0f, .height = 16.0f};
                 break;
             }
         }
@@ -264,7 +312,7 @@ bool setup_game()
 }
 void draw()
 {
-    BeginDrawing();
+    
     // Calculate dest_rect dimensions for the cell texture
     float dest_rect_width = (float)WIN_WIDTH / (float)game->cols;
     float dest_rect_height = (float)WIN_HEIGHT / (float)game->rows;
@@ -282,7 +330,7 @@ void draw()
             {
                 // DrawRectangle(posX, posY, rect_width, rect_height , RED);
                 DrawTexturePro(board_texture, 
-                    (Rectangle){.x = 32.0f, .y = 16.0f , .width = 16.0f, .height = 16.0f},
+                    (Rectangle){.x = 32.0f, .y = game->theme_y_offset + 16.0f , .width = 16.0f, .height = 16.0f},
                     (Rectangle){ . x = dest_posX , .y = dest_posY , .width = dest_rect_width, .height = dest_rect_height}, 
                     (Vector2){.x = 0.0f , .y = 0.0f}, 
                     0.0f, 
@@ -305,7 +353,7 @@ void draw()
             {
                 // DrawRectangle(posX, posY, rect_width, rect_height , DARKGRAY);
                 DrawTexturePro(board_texture, 
-                    (Rectangle){.x = 16.0f, .y = 16.0f , .width = 16.0f, .height = 16.0f},
+                    (Rectangle){.x = 16.0f, .y = game->theme_y_offset + 16.0f , .width = 16.0f, .height = 16.0f},
                     (Rectangle){ . x = dest_posX , .y = dest_posY , .width = dest_rect_width, .height = dest_rect_height}, 
                     (Vector2){.x = 0.0f , .y = 0.0f}, 
                     0.0f, 
@@ -313,8 +361,6 @@ void draw()
             }
         }
     }
-
-    EndDrawing();
 }
 void read_input()
 {
@@ -338,6 +384,52 @@ void read_input()
         board[game->cols * (size_t)row + (size_t)col].is_revealed = true;
         TraceLog(LOG_INFO, "Nearby mines : %i",board[game->cols * (size_t)row + (size_t)col].nearby_mines);
         }
+    }
+    switch(GetKeyPressed())
+    {
+        case KEY_ONE:
+            game->theme = 0;
+            game->theme_y_offset = 0.0f;
+            change_theme();
+            break;
+        case KEY_TWO:
+            game->theme = 0;
+            game->theme_y_offset = 32.0f;
+            change_theme();
+            break;
+        case KEY_THREE:
+            game->theme = 0;
+            game->theme_y_offset = 64.0f;
+            change_theme();
+            break;
+        case KEY_FOUR:
+            game->theme = 0;
+            game->theme_y_offset = 96.0f;
+            change_theme();
+            break;
+        case KEY_FIVE:
+            game->theme = 0;
+            game->theme_y_offset = 128.0f;
+            change_theme();
+            break;
+        case KEY_SIX:
+            game->theme = 0;
+            game->theme_y_offset = 160.0f;
+            change_theme();
+            break;
+        case KEY_SEVEN:
+            game->theme = 0;
+            game->theme_y_offset = 192.0f;
+            change_theme();
+            TraceLog(LOG_INFO, "THEME_6 offset : %.2f", game->theme_y_offset);
+            break;
+        case KEY_EIGHT:
+            game->theme = 0;
+            game->theme_y_offset = 224.0f;
+            change_theme();
+            break;
+        default:
+            break;
     }
 }
 bool load_image_textures()
@@ -397,4 +489,11 @@ bool load_image_textures()
     SetWindowIcon(icon_image);
     UnloadImage(icon_image);
     return true;
+}
+void change_theme()
+{
+    for (size_t i = 0; i < game->cols * game->rows; i++) 
+    {
+        board[i].src_rect.y = game->theme_y_offset;
+    }
 }
